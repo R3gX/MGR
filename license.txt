@@ -1,0 +1,8 @@
+Use in source, library and binary form is permitted.
+Redistribution and modification must meet the following conditions:
+	- My nickname (R3gX) and the origin (link) must be reproduced by binaries, 
+	  or attached in the documentation.
+	- If changes are made to my work, you are encouraged (yet not obliged)
+	  to post the changes for others to view, on the Autohotkey forum.
+ALL MY SOFTWARE IS PROVIDED "AS IS" WITHOUT ANY EXPRESSED
+OR IMPLIED WARRANTIES.
