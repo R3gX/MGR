@@ -1,12 +1,12 @@
 /*
-Name	: Mouse Gesture Recognizer v0.9.4 (05/May/2013)
+Name	: Mouse Gesture Recognizer v0.9.5 (09/May/2013)
 Author	: R3gX
-Link	: http://www.autohotkey.com/forum/viewtopic.php?t=71666
+Link	: http://www.autohotkey.com/board/topic/66655-mgr-v094/?p=421676
 
 Description :
 	This script allows you to use mouse gestures to
 	- launch files, folders or urls
-	- use functions (with parameters!)
+	- use functions (+parameters)
 	- send macros or texts
 
 Works with :
@@ -16,8 +16,7 @@ Thanks to :
 	@Carrozza, @sumon, @tsenlaw and others for their interest
 Special thanks to :
 	@mright for his work. v0.9.3+ use some of his ideas & code
-	see : http://www.autohotkey.com/board/topic/
-	66655-ahk-l-mgr-v092-mouse-rocker-wheel-gestures-recognizer/?p=460086
+	http://www.autohotkey.com/board/topic/66655-mgr-v094/?p=460086
 
 Licence	:
 	Use in source, library and binary form is permitted.
@@ -36,7 +35,7 @@ mgr_Load()
 ; Set script's settings & hotkeys
 mgr_Load(){
 	CoordMode, Mouse, Screen
-	SetFormat Float, 0.3
+	SetFormat, Float, 0.3
 	Hotkey,	*RButton,  mgr_MonitorRButton, On
 	Hotkey,	#RButton,  mgr_MonitorRButton, On
 	Hotkey, WheelUp,   mgr_Wheel, On
@@ -44,7 +43,7 @@ mgr_Load(){
 	Return
 }
 
-; Simulate the wheel keys
+; Simulate the WheelUp & WheelDown button
 mgr_Wheel(){
 	mgr_Wheel:
 	If (GetKeyState("RButton", "P") && A_ThisHotkey~="i)Wheel(Up|Down)")
@@ -65,7 +64,7 @@ mgr_WheelState(Button="", State=""){
 		wheel["WheelUp"] := 0, wheel["WheelDown"] := 0
 }
 
-; Monitor the RButton to recognize Rocker, Wheel a Mouse Gesture
+; Monitor the RButton to recognize Rocker, Wheel and Mouse Gesture
 mgr_MonitorRButton(){
 	mgr_MonitorRButton:
 	; Rocker gesture "LButton & RButton"
@@ -106,7 +105,7 @@ mgr_MonitorRButton(){
 	Else If Gesture
 		mgr_Execute(mgr_GetCommand(Gesture))
 	Else
-		SendInput, {RButton}
+		SendInput, % mgr_GetModifiers() . "{RButton}"
 	Return
 }
 
@@ -146,21 +145,22 @@ mgr_GetCommand(Gesture, Tooltip=0){
 	Area    := mgr_GetMonitorArea(3, 3)
 	mgr_G   := mgr_ReadGestures()
 	S       := mgr_GetMatchingSection(mgr_G, Title, Class, Process)
-	For index,_Gesture in [Gesture "@" Area, Gesture]
+
+	; Decreasing priority : Gesture@Area > Gesture
+	For index,_G in [Gesture "@" Area, Gesture]
 	{
-		Command := mgr_G[S.wT].HasKey(_Gesture)     ? mgr_G[S.wT, _Gesture]
-				:  mgr_G[S.wC].HasKey(_Gesture)     ? mgr_G[S.wC, _Gesture]
-				:  mgr_G[S.wP].HasKey(_Gesture)     ? mgr_G[S.wP, _Gesture]
-				:  mgr_G["Global"].HasKey(_Gesture) ? mgr_G["Global", _Gesture]
+		; Decreasing priority : Master > S.wT > S.wC > S.wP > Default
+		Command := mgr_G["Master"].HasKey(_G)  ? mgr_G["Master", _G]
+				:  mgr_G[S.wT].HasKey(_G)      ? mgr_G[S.wT, _G]
+				:  mgr_G[S.wC].HasKey(_G)      ? mgr_G[S.wC, _G]
+				:  mgr_G[S.wP].HasKey(_G)      ? mgr_G[S.wP, _G]
+				:  mgr_G["Default"].HasKey(_G) ? mgr_G["Default", _G]
 				:  ""
-		If Command {
-			Gesture := _Gesture
-			Break
-		}
+		If Command	; Leave the priority
+			Break	; to first matching command
 	}
 	RegExMatch(Command, "(?P<CMD>.+?)(;(?P<DSC>.+?))?$", m)
-	If (Tooltip==1)
-		ToolTip, % (mDSC ? mDSC : Gesture)
+	ToolTip, % (Tooltip==1) ? (mDSC ? mDSC : _G) : ""
 
 	;; Debugging
 	;ToolTip, % "Gesture`t: " Gesture "`nTitle`t: " Title "`nClass`t: " Class
@@ -183,7 +183,8 @@ mgr_ReadGestures(){
 			Loop, Parse, Content, `n, `r
 			{
 				StringSplit, KeyVal, A_LoopField, =, % A_Space . A_Tab
-				mgr_G[SectionPart, KeyVal1] := KeyVal2
+				Loop, Parse, KeyVal1, |, % A_Space . A_Tab
+					mgr_G[SectionPart, A_LoopField] := KeyVal2
 			}
 		}
 	}
@@ -240,17 +241,16 @@ mgr_ShakeGesture(Gesture){
 mgr_GetMonitorArea(partX, partY){
 	CoordMode, Mouse, Screen
 	MouseGetPos m_x, m_y, WinID
-	SysGet, Monitor_, Monitor, % mgr_GetMonitor(WinID)
+	SysGet, Monitor_, Monitor, % mgr_GetMonitorNbr()
 	m_x := m_x-Monitor_Left , m_y := m_y-Monitor_Top
 	onePartX := (Monitor_Right-Monitor_Left)//partX
 	onePartY := (Monitor_Bottom-Monitor_Top)//partY
 	Return, (m_x//onePartX) + ((m_y//onePartY)*partX) + 1
 }
 
-; Get the current monitor number where the mouse is
-mgr_GetMonitor(WinID){
+mgr_GetMonitorNbr(){ ; Get the monitor number where the mouse is
     SysGet, MonitorCount, 80
-    WinGetPos, X, Y, W, H, % "ahk_id " WinID
+    MouseGetPos, X, Y
     Loop %MonitorCount%
     {
         SysGet, Mon, Monitor, %A_Index%

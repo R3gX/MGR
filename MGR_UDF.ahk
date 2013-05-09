@@ -1,8 +1,10 @@
-Win_Minimize(){ ; Minimize active window
+﻿; Minimize the active window
+Win_Minimize(){
 	WinMinimize, A
 }
 
-Win_Maximize(){ ; Maximize or Restore the window
+; Maximize or Restore the active window
+Win_Maximize(){
 	WinGet, WinMinMax, MinMax, A
 	If (WinMinMax==1)
 		WinRestore, A
@@ -10,85 +12,121 @@ Win_Maximize(){ ; Maximize or Restore the window
 		WinMaximize, A
 }
 
-Win_Close(){ ; Close the whole current window, not the current tab
+; Close the whole active window, not only the tab
+Win_Close(){
 	WinClose, A
 }
 
-Win_AlwaysOnTop(){ ; Toggle a window between AlwaysOnTop states
+; Toggle the active window between AlwaysOnTop states
+Win_AlwaysOnTop(){
 	WinSet, AlwaysOnTop, Toggle, A
 }
 
-Win_GetProcess(){ ; Get the process name of the current window
-	TimeLimit := 3 , t1 := A_TickCount
-	While (Seconds<TimeLimit){
+; Get the process name of the active window
+; and put it in the clipboard
+Win_GetProcess(){
+	TLimit := 3 , t1 := A_TickCount
+	While (Seconds<TLimit){
 		Sleep, 10
 		t2 := A_TickCount , Seconds	:= ((t2-t1)//1000)
 		WinGet, Process, ProcessName, A
-		ToolTip, % "Window class (" TimeLimit-Seconds "s) : " Process
+		ToolTip, % "Process name (" TLimit-Seconds "s) : " Process
 	}
 	Clipboard := Process
 	ToolTip
 }
 
-Win_GetClass(){ ; Get the class of the current window
-	TimeLimit := 3 , t1 := A_TickCount
-	While (Seconds<TimeLimit){
+; Get the class of the active window
+; and put it in the clipboard
+Win_GetClass(){
+	TLimit := 3 , t1 := A_TickCount
+	While (Seconds<TLimit){
 		Sleep, 10
 		t2 := A_TickCount , Seconds	:= ((t2-t1)//1000)
-		WinGetClass, CurrentWinClass, A
-		ToolTip, % "Window class (" TimeLimit-Seconds "s) : " CurrentWinClass
+		WinGetClass, Class, A
+		ToolTip, % "Window's class (" TLimit-Seconds "s) : " Class
 	}
-	Clipboard := CurrentWinClass
+	Clipboard := Class
 	ToolTip
 }
 
-Win_Last(){ ; Activate the last window
-	IDs := Win_GetList() , Pos := 1
-	While (Pos := RegExMatch(IDs, "[^,]+", m, Pos+StrLen(m)))
-		ID%A_Index% := m
-	WinActivate, % "ahk_id " ID3
+; Activate the next window
+Win_Next(){
+	IDs := Win_GetIDs() , Pos := 1
+	WinActivate, % "ahk_id " IDs[IDs.MaxIndex()]
 }
 
-Win_Next(){ ; Activate the last window
-	IDs := Win_GetList() , Pos := 1
-	While (Pos := RegExMatch(IDs, "[^,]+", m, Pos+StrLen(m)))
-		ID%A_Index% := m
-	WinActivate, % "ahk_id " ID4
+; Activate the last window
+Win_Last(){
+	IDs := Win_GetIDs() , Pos := 1
+	WinGetTitle, t1, % "ahk_id " IDs[1]
+	WinGetTitle, t2, % "ahk_id " IDs[2]
+	WinActivate, % "ahk_id " ((t1=t2) ? IDs[3] : IDs[2])
 }
 
-Win_GetList(){
+; Get IDs of all visible windows
+Win_GetIDs(){
 	DetectHiddenWindows := A_DetectHiddenWindows
 	DetectHiddenWindows, Off
+	BlackList := "Program manager|ProgMan|WorkerW|Startup|Démarrer"
+	IDs := []
 	WinGet, ID, List
 	Loop, % ID
 	{
 		ID := ID%A_Index%
 		WinGetTitle, Title, ahk_id %ID%
 		WinGetClass, Class, ahk_id %ID%
-		If Title
-			If Title not in Program manager,ProgMan,WorkerW,Startup,Démarrer
-				If Class not in tooltips_class32
-					IDs .= (IDs ? "," : "") ID
+		If ( Title && not (Title~="i)(" BlackList ")")
+			&& not (Class~="i)tooltips_class32") )
+				IDs.Insert(ID)
 	}
 	DetectHiddenWindows, % DetectHiddenWindows
 	Return, IDs
 }
 
-Win_Monitor(WinID){ ; Get the monitor number where the window is
+; Get the monitor number where the mouse is
+Win_MonitorNbr(){
     SysGet, MonitorCount, 80
-    WinGetPos, X, Y, W, H, % "ahk_id " WinID
+    WinGetPos, X, Y,,, A
     Loop %MonitorCount%
     {
         SysGet, Mon, Monitor, %A_Index%
-        If (X>=(MonLeft-10) && X<=(MonRight+10)
+        If (X>=(MonLeft-20) && X<=(MonRight+10)
         	&& Y>=(MonTop-10) && Y<=(MonBottom+10))
             Return A_Index
     }
 }
 
+; Move the active window to the next monitor
+Win_Move2NextMonitor(Maximize=0)
+{
+    CoordMode, Mouse, Screen
+    SetWinDelay, -1
+    SysGet, MonitorCount, MonitorCount
+    WID := WinExist("A")
+    If !WinActive("ahk_id " WID)
+        WinActivate, % "ahk_id " WID
+    MonitorNbr    := Win_MonitorNbr()
+    NewMonitorNbr := (MonitorNbr=MonitorCount) ? 1 : MonitorNbr+1
+    SysGet, MWA_,  MonitorWorkArea, % MonitorNbr
+	SysGet, NMWA_, MonitorWorkArea, % NewMonitorNbr
+	SysGet, NM_, Monitor, % NewMonitorNbr
+	WinGetPos, WX, WY, WW, WH, % "ahk_id " WID
+	WinGet, WinMinMax, MinMax, % "ahk_id " WID
+    WXO := (WX-MWA_Left)          , WYO := (WY-MWA_Top)
+    WNW := (NMWA_Right-NMWA_Left) , WNH := (NMWA_Bottom-NMWA_Top)
+    MWA_W := (MWA_Right-MWA_Left) , MWA_H := (MWA_Bottom-MWA_Top)
+    WinMove, % "ahk_id " WID,, % NMWA_Left+WXO , % NMWA_Top+WYO
+    If (WinMinMax==1)
+        WinMove, % "ahk_id " WID,,,, % WNW, % WNH
+    Else If (!WinMinMax && WW>=MWA_W && WH>=MWA_H)
+        WinMove, % "ahk_id " WID,,,, % NM_Right-NM_Left, % NM_Bottom-NM_Top
+}
+
+; Move the active window to the left part of the screen
 Win_MoveLeft(){
     WinGet, WinID, ID, A
-    Monitor := Win_Monitor(WinID)
+    Monitor := Win_MonitorNbr()
     SysGet, MWA_, MonitorWorkArea, % Monitor
     WinGet, WinMinMax, MinMax, % "ahk_id " WinID
     If (WinMinMax==1)
@@ -98,9 +136,10 @@ Win_MoveLeft(){
     WinMove, % "ahk_id " WinID,, % X, % Y, % W, % H
 }
 
+; Move the active window to the right part of the screen
 Win_MoveRight(){
     WinGet, WinID, ID, A
-    Monitor := Win_Monitor(WinID)
+    Monitor := Win_MonitorNbr()
     SysGet, MWA_, MonitorWorkArea, % Monitor
     WinGet, WinMinMax, MinMax, % "ahk_id " WinID
     If (WinMinMax==1)
@@ -110,13 +149,14 @@ Win_MoveRight(){
     WinMove, % "ahk_id " WinID,, % X, % Y, % W, % H
 }
 
-Cpbd_PastePlainText(){ ; Paste the clipboard in plain text format
+; Paste the clipboard in plain text format
+Cpbd_PastePlainText(){
 	WinActivate, A
 	Clipboard := Clipboard
 	Send, ^v
 }
 
-; Get the user's selection and converts it to text format
+; Get the user's selection and converts it to plain text format
 GetSelection(PlainText=1){
 	LastClipboard := ClipboardAll , Clipboard := ""
 	SendInput, ^c
@@ -129,7 +169,8 @@ GetSelection(PlainText=1){
 	Return, Selection
 }
 
-SaveSelection(){ ; Save the user's selection in a txt file
+; Save the user's selection in a txt file
+SaveSelection(){
 	If !(Selection := GetSelection())
 		Return
 	InputBox, FileName, Save Clipboard:, File name ?,, 250, 115
@@ -143,6 +184,7 @@ SaveSelection(){ ; Save the user's selection in a txt file
 	Return, Path
 }
 
+; Simulate a click at X and Y coordinates
 MClick(x=0, y=0){
 	If !(x~="^\d$" || y~="^\d$")
 		x := 0 , y := 0
