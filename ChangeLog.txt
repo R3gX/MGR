@@ -1,0 +1,35 @@
+Change log :
+v0.9.5 (09/May/2013)
+- Fixed some bugs
+- Modified : rocker & wheel gesture syntax XX & XX >> XX-XX (RB & LB >> RB-LB , RB & WU >> RB-WU...)
+- Important modifications on 'gestures.ini'.
+• The 'Global' section is now renamed in 'Default'.
+This means that if a gesture is not set for the active application but is set in the 'Default' section,
+the triggered command will be the command set in the 'Default' section.
+If you don't want default gestures, simply delete the 'Default' section.
+• A new section was added : 'Master'. This section has the priority over all others sections.
+
+Here is a summary of priorities* for the sections : Master > Process:Title > Process:Class > Process > Default
+For the gestures : Gesture@Area > Gesture
+* :    > means 'has priority over'
+
+
+v0.9.4 (05/May/2013)
+- Added : Screen Area feature (thank you @mright!)
+• By default, screen area is splitted in 3x3 (9 areas). @1 = Top-Left , @4 = Middle-Left , @5 = Middle , @9 = Bottom-Right
+• eg: L@3 >> Left gesture done at the 3rd area (Top-Right) of the screen
+- Added : Shake Gestures feature. eg L-R-L or R-L-R or L-R-L-R... >> HShake >>  horizontal shake gesture (thank you @tsenlaw!)
+Modifiers, rocker, wheel, shake and area feature can be combined! eg : #HShake@4 >> Windows modifier + Horizontal Shake @ Area 4
+- Modified : Windows's class feature is back but it has to be appended to the window's process   [win_process.exe : win_class]
+v0.9.3 (04/May/2013)
+- Modified : some functions (based on @mright work, thanks!)
+- Modified : Now window's process name is used instead of window's class
+v0.9.2 (02/May/2013)
+- Added : mgr_GetMatchingSections (easier to debug with mgr_GetCommand!)
+- Modified : mgr_GetCommand
+- Fixed : Another major bug with specific commands set by window's class or window's title
+v0.9.1 (01/May/2013)
+- Fixed : Major bug with specific commands set by window's class or window's title
+v0.9 (01/May/2013)
+- Added : Rocker and Wheel gestures
+- Fixed : minor bugs
