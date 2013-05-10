@@ -1,10 +1,16 @@
 ﻿; Minimize the active window
 Win_Minimize(){
+	WinGetClass, Class, A
+	If (Class="Progman")
+		Return
 	WinMinimize, A
 }
 
 ; Maximize or Restore the active window
 Win_Maximize(){
+	WinGetClass, Class, A
+	If (Class="Progman")
+		Return
 	WinGet, WinMinMax, MinMax, A
 	If (WinMinMax==1)
 		WinRestore, A
@@ -19,6 +25,9 @@ Win_Close(){
 
 ; Toggle the active window between AlwaysOnTop states
 Win_AlwaysOnTop(){
+	WinGetClass, Class, A
+	If (Class="Progman")
+		Return
 	WinSet, AlwaysOnTop, Toggle, A
 }
 

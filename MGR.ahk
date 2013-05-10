@@ -2,6 +2,7 @@
 Name	: Mouse Gesture Recognizer v0.9.5 (09/May/2013)
 Author	: R3gX
 Link	: http://www.autohotkey.com/board/topic/66655-mgr-v094/?p=421676
+GitHub	: https://github.com/R3gX/MGR
 
 Description :
 	This script allows you to use mouse gestures to
@@ -69,7 +70,7 @@ mgr_MonitorRButton(){
 	mgr_MonitorRButton:
 	; Rocker gesture "LButton & RButton"
 	If GetKeyState("LButton", "P")
-		Return, mgr_Execute(mgr_GetCommand("LB & RB"))
+		Return, mgr_Execute(mgr_GetCommand("LB-RB"))
 
 	; Initialize variables
 	Gesture := Direction := LDirection := Directions := ""
@@ -81,11 +82,11 @@ mgr_MonitorRButton(){
 
 		; Rocker & Wheel Gestures
 		If GetKeyState("LButton", "P")		; RButton & LButton
-			mgr_Execute(mgr_GetCommand("RB & LB")) , Rocker_Wheel := 1
+			mgr_Execute(mgr_GetCommand("RB-LB")) , Rocker_Wheel := 1
 		Else If mgr_WheelState("WheelUp")	; RButton & WheelUp
-			mgr_Execute(mgr_GetCommand("RB & WU")) , Rocker_Wheel := 1
+			mgr_Execute(mgr_GetCommand("RB-WU")) , Rocker_Wheel := 1
 		Else If mgr_WheelState("WheelDown")	; RButton & WheelDown
-			mgr_Execute(mgr_GetCommand("RB & WD")) , Rocker_Wheel := 1
+			mgr_Execute(mgr_GetCommand("RB-WD")) , Rocker_Wheel := 1
 		Rocker_Wheel ? mgr_WheelState()
 
 		; Mouse Gestures
